@@ -1,0 +1,759 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Kuwenta</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400..600&display=swap">
+<style>
+/* Layout: a floating sidebar of five calculators (each showing its live headline figure) beside one calculator stage.
+   Every tool has its own accent hue; neutrals lean slightly green so the page feels like one ledger. */
+:root{
+  --bg:#ECF0EE; --surface:#FFFFFF; --surface-2:#F3F6F4; --line:#D8DFDB; --line-2:#E7ECE9;
+  --fg:#12201A; --muted:#55645C; --faint:#8E9A93; --on-accent:#FFFFFF;
+  --a-payroll:#08784C; --a-tax:#B35200; --a-loan:#2A4FD1; --a-savings:#5D3CD0; --a-price:#C0245F;
+  --s-sss:#4766F0; --s-ph:#0F9AA0; --s-hdmf:#D69A00; --s-tax:#DB5436; --s-other:#8793A0;
+  --shadow:0 1px 2px rgba(18,32,26,.05),0 14px 32px -18px rgba(18,32,26,.18);
+  --f-display:"Bricolage Grotesque","Instrument Sans",system-ui,sans-serif;
+  --f-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1411; --surface:#141D19; --surface-2:#1A2520; --line:#26332D; --line-2:#1F2B26;
+    --fg:#E9F0EC; --muted:#93A59B; --faint:#62736A; --on-accent:#0A110E;
+    --a-payroll:#3FDB98; --a-tax:#FFB04D; --a-loan:#86A2FF; --a-savings:#B39CFF; --a-price:#FF80AE;
+    --s-sss:#7F98FF; --s-ph:#3CD0D6; --s-hdmf:#FFC94D; --s-tax:#FF8566; --s-other:#A2AEB9;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 32px -18px rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1411; --surface:#141D19; --surface-2:#1A2520; --line:#26332D; --line-2:#1F2B26;
+  --fg:#E9F0EC; --muted:#93A59B; --faint:#62736A; --on-accent:#0A110E;
+  --a-payroll:#3FDB98; --a-tax:#FFB04D; --a-loan:#86A2FF; --a-savings:#B39CFF; --a-price:#FF80AE;
+  --s-sss:#7F98FF; --s-ph:#3CD0D6; --s-hdmf:#FFC94D; --s-tax:#FF8566; --s-other:#A2AEB9;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 32px -18px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+.t-payroll{--accent:var(--a-payroll)} .t-tax{--accent:var(--a-tax)} .t-loan{--accent:var(--a-loan)}
+.t-savings{--accent:var(--a-savings)} .t-price{--accent:var(--a-price)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent,var(--fg));outline-offset:2px}
+
+/* shell */
+.app{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:276px minmax(0,1fr);gap:24px;padding-block:20px;
+  padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+.side{position:sticky;top:20px;align-self:start;max-height:calc(100vh - 40px);overflow:auto;display:flex;flex-direction:column;gap:22px;
+  background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:18px;box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:42px;height:42px;flex:none}
+.m-bg{fill:var(--fg)} .m-k1{fill:var(--a-payroll)} .m-k2{fill:var(--bg)} .m-k3{fill:var(--a-price)}
+.wordmark{font:700 1.45rem/1 var(--f-display);letter-spacing:-.03em}
+.tagline{font-size:.78rem;color:var(--muted);margin-top:3px}
+.nav-label{font:650 .68rem var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:-12px}
+.nav{display:flex;flex-direction:column;gap:6px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;border:1px solid transparent;color:var(--fg);text-decoration:none;transition:background .15s,border-color .15s}
+.nav-item:hover{background:var(--surface-2)}
+.nav-item[aria-current="page"]{background:color-mix(in srgb,var(--accent) 10%,var(--surface));border-color:color-mix(in srgb,var(--accent) 32%,var(--line))}
+.ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--accent) 13%,var(--surface));color:var(--accent);transition:background .15s,color .15s}
+.nav-item[aria-current="page"] .ico{background:var(--accent);color:var(--on-accent)}
+.ico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.txt{display:grid;min-width:0}
+.name{font-weight:650;font-size:.95rem}
+.val{font:500 .74rem var(--f-mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-note{font-size:.76rem;color:var(--muted);line-height:1.5;border-top:1px solid var(--line-2);padding-top:16px;margin:0}
+.stage{min-width:0}
+
+/* calculator panel */
+.calc{animation:rise .35s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.calc-head{margin:6px 0 22px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font:650 .72rem var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+h1{font:700 clamp(2rem,4.4vw,3.2rem)/1.02 var(--f-display);letter-spacing:-.03em;margin:.4em 0 .3em;text-wrap:balance}
+h1:focus{outline:none}
+.lede{color:var(--muted);max-width:60ch;font-size:1.02rem;line-height:1.55;margin:0}
+.cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:26px;box-shadow:var(--shadow);min-width:0}
+.card-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+h2{font:650 1.05rem var(--f-body);margin:0}
+.ghost{background:none;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:.78rem;font-weight:600;color:var(--muted);cursor:pointer}
+.ghost:hover{color:var(--fg);border-color:var(--faint)}
+
+/* inputs */
+.fields{display:grid;gap:18px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:grid;gap:8px;min-width:0}
+label,.lab{font-size:.82rem;font-weight:650}
+.hint{font-size:.75rem;color:var(--muted);line-height:1.45}
+.inp{display:flex;align-items:center;height:50px;padding:0 14px;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;transition:border-color .15s,box-shadow .15s}
+.inp:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+.inp:has(input:disabled){opacity:.45}
+.inp input,.inp select{flex:1;min-width:0;width:100%;height:100%;background:none;border:0;outline:0;font:600 1.02rem var(--f-mono);font-variant-numeric:tabular-nums}
+.inp select{font-family:var(--f-body);font-weight:600;font-size:.95rem;cursor:pointer;-webkit-appearance:none;appearance:none;padding-right:22px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%238E9A93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 0 center}
+.inp select option{color:#12201A;background:#fff}
+.pre,.suf{color:var(--muted);font:600 .95rem var(--f-mono)}
+.pre{margin-right:8px} .suf{margin-left:8px}
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;cursor:pointer;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:6px;background:linear-gradient(to right,var(--accent) var(--p,50%),var(--line) var(--p,50%))}
+input[type=range]::-moz-range-track{height:6px;border-radius:6px;background:var(--line)}
+input[type=range]::-moz-range-progress{height:6px;border-radius:6px;background:var(--accent)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;box-sizing:border-box;width:20px;height:20px;margin-top:-7px;border-radius:50%;background:var(--accent);border:3px solid var(--surface);box-shadow:0 0 0 1px var(--accent),0 2px 6px rgba(0,0,0,.2)}
+input[type=range]::-moz-range-thumb{box-sizing:border-box;width:20px;height:20px;border-radius:50%;background:var(--accent);border:3px solid var(--surface);box-shadow:0 0 0 1px var(--accent)}
+input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:6px}
+.seg{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:14px}
+.seg input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.seg label{padding:10px 8px;text-align:center;border-radius:10px;font-size:.84rem;font-weight:600;color:var(--muted);cursor:pointer;transition:background .15s,color .15s}
+.seg input:checked + label{background:var(--accent);color:var(--on-accent)}
+.seg input:focus-visible + label{outline:2px solid var(--accent);outline-offset:2px}
+.switch{position:relative;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);cursor:pointer}
+.switch b{display:block;font-size:.86rem}
+.switch small{display:block;font-size:.75rem;color:var(--muted)}
+.switch input{position:absolute;opacity:0;width:1px;height:1px}
+.track{flex:none;width:44px;height:26px;border-radius:26px;background:var(--line);position:relative;transition:background .15s}
+.track::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+.switch input:checked + .track{background:var(--accent)}
+.switch input:checked + .track::after{transform:translateX(18px)}
+.switch input:focus-visible + .track{outline:2px solid var(--accent);outline-offset:2px}
+
+/* results */
+.hero{border-radius:20px;padding:22px;background:color-mix(in srgb,var(--accent) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 24%,var(--line))}
+.lbl{font-size:.8rem;font-weight:650;color:var(--muted)}
+.big{font:700 clamp(2rem,3.6vw,2.9rem)/1.05 var(--f-display);letter-spacing:-.03em;margin:.3em 0 .25em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.sub{color:var(--muted);font-size:.9rem}
+.chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px;margin-top:16px}
+.chip{background:color-mix(in srgb,var(--surface) 75%,transparent);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-width:0}
+.cl{font-size:.7rem;color:var(--muted);font-weight:650}
+.cv{font:600 .96rem var(--f-mono);margin-top:2px;overflow-wrap:anywhere}
+.bar{display:flex;gap:3px;height:16px;margin-top:22px}
+.bar i{display:block;height:100%;border-radius:5px;background:var(--c);min-width:0;transition:flex-grow .35s ease}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:.78rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend b{width:9px;height:9px;border-radius:3px;background:var(--c);display:inline-block}
+.sec{font:650 .72rem var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:26px 0 4px}
+.rows{display:grid}
+.row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line-2)}
+.row .dot{width:10px;height:10px;border-radius:3px;flex:none;background:var(--c)}
+.row .k{flex:1;min-width:0;color:var(--muted)}
+.row .v{font:500 .92rem var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.row .v.neg{color:var(--muted)}
+.row.total{border-top:1.5px solid var(--fg);border-bottom:0;margin-top:4px;padding-top:14px}
+.row.total .k{color:var(--fg);font-weight:650}
+.row.total .v{font-weight:700;font-size:1rem}
+.note{font-size:.78rem;color:var(--muted);line-height:1.55;margin:16px 0 0}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.opt{border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-width:0}
+.opt.win{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
+.ol{font-size:.74rem;color:var(--muted);font-weight:650;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ov{font:650 1.08rem var(--f-mono);margin-top:4px;overflow-wrap:anywhere}
+.pill{font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;background:var(--accent);color:var(--on-accent);padding:2px 7px;border-radius:20px}
+.tbl-wrap{overflow-x:auto;margin-top:6px}
+.tbl{width:100%;border-collapse:collapse;font-size:.85rem}
+.tbl th{font:650 .66rem var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:10px;text-align:right;border-bottom:1px solid var(--line-2);font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl td:first-child{font-family:var(--f-body)}
+.tbl tr.off td{opacity:.4}
+.tbl tr.hot td{background:color-mix(in srgb,var(--accent) 9%,transparent)}
+.tbl tfoot td{font-weight:700;border-bottom:0;border-top:1.5px solid var(--fg)}
+details.sched{margin-top:20px;border-top:1px solid var(--line-2)}
+details.sched summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;padding:14px 0;font-weight:650;font-size:.9rem}
+details.sched summary::-webkit-details-marker{display:none}
+details.sched summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .2s;margin-right:4px}
+details.sched[open] summary::after{transform:rotate(-135deg)}
+.chart{width:100%;height:auto;display:block;margin-top:12px}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.chart .tick{fill:var(--muted);font:11px var(--f-mono)}
+.chart .area{fill:color-mix(in srgb,var(--accent) 14%,transparent)}
+.chart .ln{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.chart .ln2{fill:none;stroke:var(--faint);stroke-width:1.75;stroke-dasharray:5 5}
+.chart .b-in{fill:var(--accent)}
+.chart .b-ct{fill:color-mix(in srgb,var(--accent) 38%,var(--surface-2))}
+.chart .hit{fill:transparent}
+.chart .col:hover .b-in,.chart .col:hover .b-ct{opacity:.8}
+.tip{position:fixed;z-index:50;pointer-events:none;background:var(--fg);color:var(--bg);padding:8px 11px;border-radius:10px;font:500 .76rem/1.5 var(--f-mono);white-space:pre-line;max-width:250px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.foot{margin:26px 0 0;color:var(--muted);font-size:.78rem;max-width:72ch;line-height:1.55}
+
+@media (max-width:1060px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:880px){
+  .app{display:block;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .side{display:contents}
+  .brand{margin-bottom:14px}
+  .side-note,.nav-label{display:none}
+  .stage{padding-bottom:92px}
+  .nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;
+    padding:8px max(8px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));
+    background:color-mix(in srgb,var(--surface) 94%,transparent);border-top:1px solid var(--line);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+  .nav-item{flex-direction:column;gap:4px;padding:6px 2px;border-radius:14px}
+  .nav-item .ico{width:34px;height:34px}
+  .txt{justify-items:center}
+  .name{font-size:.68rem;font-weight:600;white-space:nowrap}
+  .val{display:none}
+}
+@media (max-width:520px){
+  .card{padding:20px;border-radius:22px}
+  .two,.cmp{grid-template-columns:1fr}
+  .hero{padding:18px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 40 40" aria-hidden="true"><rect class="m-bg" width="40" height="40" rx="12"/><rect class="m-k1" x="8" y="8" width="10" height="10" rx="3"/><rect class="m-k2" x="22" y="8" width="10" height="10" rx="3"/><rect class="m-k2" x="8" y="22" width="10" height="10" rx="3"/><rect class="m-k3" x="22" y="22" width="10" height="10" rx="3"/></svg>
+      <div><div class="wordmark">Kuwenta</div><div class="tagline">Money calculators</div></div>
+    </div>
+    <div class="nav-label" id="nav-label">Calculators</div>
+    <nav class="nav" aria-labelledby="nav-label">
+      <a class="nav-item t-payroll" href="#payroll" data-k="payroll"><span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5h.01M18 14.5h.01"/></svg></span><span class="txt"><span class="name">Payroll</span><span class="val" id="nv-payroll"></span></span></a>
+      <a class="nav-item t-tax" href="#tax" data-k="tax"><span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9.5 9.5h.01M14.5 14.5h.01M14.5 9.5l-5 5"/></svg></span><span class="txt"><span class="name">Income tax</span><span class="val" id="nv-tax"></span></span></a>
+      <a class="nav-item t-loan" href="#loan" data-k="loan"><span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7"/><path d="M5.5 9.8V20h13V9.8"/><path d="M10 20v-5.5h4V20"/></svg></span><span class="txt"><span class="name">Loan</span><span class="val" id="nv-loan"></span></span></a>
+      <a class="nav-item t-savings" href="#savings" data-k="savings"><span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5.5-5.5 4 4L21 7"/><path d="M15 7h6v6"/></svg></span><span class="txt"><span class="name">Savings</span><span class="val" id="nv-savings"></span></span></a>
+      <a class="nav-item t-price" href="#price" data-k="price"><span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7a1 1 0 0 1 .7.3l7.6 7.6a1 1 0 0 1 0 1.4l-7.7 7.7a1 1 0 0 1-1.4 0l-7.6-7.6a1 1 0 0 1-.3-.7z"/><circle cx="8.5" cy="8.5" r="1.2"/></svg></span><span class="txt"><span class="name">Price &amp; VAT</span><span class="val" id="nv-price"></span></span></a>
+    </nav>
+    <p class="side-note">Figures follow published 2026 SSS, PhilHealth, Pag-IBIG and BIR tables. They are estimates for planning.</p>
+  </aside>
+
+  <main class="stage" id="stage">
+
+    <!-- PAYROLL -->
+    <section class="calc t-payroll" id="calc-payroll" data-k="payroll" aria-labelledby="h-payroll" hidden>
+      <header class="calc-head">
+        <span class="eyebrow">Philippines · 2026 contribution tables</span>
+        <h1 id="h-payroll" tabindex="-1">Payroll calculator</h1>
+        <p class="lede">See what lands in your account after SSS, PhilHealth, Pag-IBIG and withholding tax, and what your employer really spends on you.</p>
+      </header>
+      <div class="cols">
+        <form class="card" autocomplete="off" novalidate>
+          <div class="card-h"><h2>Your pay</h2><button type="reset" class="ghost">Reset</button></div>
+          <div class="fields">
+            <div class="field"><label for="pay-basic">Monthly basic salary</label><div class="inp"><span class="pre">₱</span><input id="pay-basic" type="number" inputmode="decimal" min="0" step="any" value="35000"></div></div>
+            <div class="field"><label for="pay-ot">Overtime and other taxable pay</label><div class="inp"><span class="pre">₱</span><input id="pay-ot" type="number" inputmode="decimal" min="0" step="any" value="0"></div><span class="hint">Overtime, commissions, taxable bonuses.</span></div>
+            <div class="field"><label for="pay-allow">Non-taxable allowances</label><div class="inp"><span class="pre">₱</span><input id="pay-allow" type="number" inputmode="decimal" min="0" step="any" value="2000"></div><span class="hint">Rice, laundry, uniform and other de minimis benefits.</span></div>
+            <div class="field"><label for="pay-other">Other deductions</label><div class="inp"><span class="pre">₱</span><input id="pay-other" type="number" inputmode="decimal" min="0" step="any" value="0"></div><span class="hint">Company loans, HMO, union dues.</span></div>
+            <div class="field"><span class="lab">Pay schedule</span>
+              <div class="seg" role="radiogroup" aria-label="Pay schedule">
+                <input type="radio" name="pay-sched" id="ps-m" value="monthly" checked><label for="ps-m">Monthly</label>
+                <input type="radio" name="pay-sched" id="ps-s" value="semi"><label for="ps-s">15th and 30th</label>
+              </div>
+            </div>
+          </div>
+        </form>
+        <div class="card">
+          <div class="hero">
+            <div class="lbl">Net take-home pay, per month</div>
+            <div class="big" id="pay-net">—</div>
+            <div class="sub" id="pay-sub"></div>
+            <div class="chips">
+              <div class="chip"><div class="cl">Per year</div><div class="cv" id="pay-year"></div></div>
+              <div class="chip"><div class="cl">Total deductions</div><div class="cv" id="pay-ded"></div></div>
+              <div class="chip"><div class="cl">Deduction rate</div><div class="cv" id="pay-rate"></div></div>
+            </div>
+          </div>
+          <div class="bar" id="pay-bar" role="img" aria-label="Share of gross pay by take-home and deduction"></div>
+          <div class="legend" id="pay-legend"></div>
+          <div class="sec">Monthly payslip</div>
+          <div class="rows" id="pay-rows"></div>
+          <div class="sec">What your employer also pays</div>
+          <div class="rows" id="pay-er"></div>
+          <p class="note">Withholding tax is annualised from your taxable pay. 13th-month pay is not included; the first ₱90,000 of it and other bonuses is tax-free each year.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- INCOME TAX -->
+    <section class="calc t-tax" id="calc-tax" data-k="tax" aria-labelledby="h-tax" hidden>
+      <header class="calc-head">
+        <span class="eyebrow">Philippines · TRAIN brackets, 2023 onward</span>
+        <h1 id="h-tax" tabindex="-1">Income tax calculator</h1>
+        <p class="lede">Work out your annual income tax and check whether the 8% flat option would cost you less than graduated rates.</p>
+      </header>
+      <div class="cols">
+        <form class="card" autocomplete="off" novalidate>
+          <div class="card-h"><h2>Your year</h2><button type="reset" class="ghost">Reset</button></div>
+          <div class="fields">
+            <div class="field"><label for="tx-gross">Annual gross income</label><div class="inp"><span class="pre">₱</span><input id="tx-gross" type="number" inputmode="decimal" min="0" step="any" value="720000"></div><span class="hint">Everything you earn in the year before tax.</span></div>
+            <div class="field"><label for="tx-ded">Deductions</label><div class="inp"><span class="pre">₱</span><input id="tx-ded" type="number" inputmode="decimal" min="0" step="any" value="0"></div><span class="hint">SSS, PhilHealth and Pag-IBIG you paid, plus the first ₱90,000 of 13th-month pay and bonuses. Used for graduated rates only.</span></div>
+            <div class="field"><span class="lab">Method</span>
+              <div class="seg" role="radiogroup" aria-label="Tax method">
+                <input type="radio" name="tx-method" id="tm-g" value="grad" checked><label for="tm-g">Graduated rates</label>
+                <input type="radio" name="tx-method" id="tm-f" value="flat"><label for="tm-f">8% flat</label>
+              </div>
+              <span class="hint">The 8% option is for self-employed people and freelancers with gross receipts up to ₱3,000,000. The first ₱250,000 is exempt.</span>
+            </div>
+          </div>
+        </form>
+        <div class="card">
+          <div class="hero">
+            <div class="lbl" id="tx-lbl">Income tax for the year</div>
+            <div class="big" id="tx-due">—</div>
+            <div class="sub" id="tx-sub"></div>
+            <div class="chips">
+              <div class="chip"><div class="cl">Effective rate</div><div class="cv" id="tx-eff"></div></div>
+              <div class="chip"><div class="cl">Top bracket rate</div><div class="cv" id="tx-mar"></div></div>
+              <div class="chip"><div class="cl">Set aside monthly</div><div class="cv" id="tx-mon"></div></div>
+            </div>
+          </div>
+          <div class="bar" id="tx-bar" role="img" aria-label="Share of income kept versus paid as tax"></div>
+          <div class="legend" id="tx-legend"></div>
+          <div class="sec">Which method costs less</div>
+          <div class="cmp" id="tx-cmp"></div>
+          <p class="note" id="tx-note"></p>
+          <div class="sec">Graduated tax, bracket by bracket</div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Bracket</th><th>Rate</th><th>Taxed income</th><th>Tax</th></tr></thead><tbody id="tx-tbl"></tbody><tfoot id="tx-foot"></tfoot></table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOAN -->
+    <section class="calc t-loan" id="calc-loan" data-k="loan" aria-labelledby="h-loan" hidden>
+      <header class="calc-head">
+        <span class="eyebrow">Home, car or personal loan</span>
+        <h1 id="h-loan" tabindex="-1">Loan calculator</h1>
+        <p class="lede">Find your monthly payment, the interest you will pay in total, and how much sooner and cheaper extra payments get you to zero.</p>
+      </header>
+      <div class="cols">
+        <form class="card" autocomplete="off" novalidate>
+          <div class="card-h"><h2>The loan</h2><button type="reset" class="ghost">Reset</button></div>
+          <div class="fields">
+            <div class="field"><label for="ln-amt">Loan amount</label><div class="inp"><span class="pre">₱</span><input id="ln-amt" type="number" inputmode="decimal" min="0" step="any" value="1500000"></div></div>
+            <div class="field"><label for="ln-rate">Interest rate per year</label><div class="inp"><input id="ln-rate" type="number" inputmode="decimal" min="0" step="any" value="7.5"><span class="suf">%</span></div><input type="range" data-for="ln-rate" min="0" max="20" step="0.05" value="7.5" aria-label="Interest rate slider"></div>
+            <div class="field"><label for="ln-yrs">Term</label><div class="inp"><input id="ln-yrs" type="number" inputmode="decimal" min="1" step="1" value="15"><span class="suf">years</span></div><input type="range" data-for="ln-yrs" min="1" max="30" step="1" value="15" aria-label="Loan term slider"></div>
+            <div class="field"><label for="ln-extra">Extra payment each month</label><div class="inp"><span class="pre">₱</span><input id="ln-extra" type="number" inputmode="decimal" min="0" step="any" value="0"></div><span class="hint">Optional. Extra goes straight to principal.</span></div>
+          </div>
+        </form>
+        <div class="card">
+          <div class="hero">
+            <div class="lbl">Monthly payment</div>
+            <div class="big" id="ln-pmt">—</div>
+            <div class="sub" id="ln-sub"></div>
+            <div class="chips">
+              <div class="chip"><div class="cl">Total interest</div><div class="cv" id="ln-int"></div></div>
+              <div class="chip"><div class="cl">Total paid</div><div class="cv" id="ln-paid"></div></div>
+              <div class="chip"><div class="cl" id="ln-c3l">Interest share</div><div class="cv" id="ln-c3"></div></div>
+            </div>
+          </div>
+          <div class="sec">Balance over time</div>
+          <div id="ln-chart"></div>
+          <div class="legend" id="ln-legend"></div>
+          <details class="sched"><summary>Year-by-year schedule</summary>
+            <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Year</th><th>Principal</th><th>Interest</th><th>Balance</th></tr></thead><tbody id="ln-tbl"></tbody></table></div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- SAVINGS -->
+    <section class="calc t-savings" id="calc-savings" data-k="savings" aria-labelledby="h-savings" hidden>
+      <header class="calc-head">
+        <span class="eyebrow">Compound growth</span>
+        <h1 id="h-savings" tabindex="-1">Savings calculator</h1>
+        <p class="lede">Project how a starting deposit and steady monthly savings grow with compound interest, and what that money is worth after inflation.</p>
+      </header>
+      <div class="cols">
+        <form class="card" autocomplete="off" novalidate>
+          <div class="card-h"><h2>Your plan</h2><button type="reset" class="ghost">Reset</button></div>
+          <div class="fields">
+            <div class="two">
+              <div class="field"><label for="sv-init">Starting amount</label><div class="inp"><span class="pre">₱</span><input id="sv-init" type="number" inputmode="decimal" min="0" step="any" value="100000"></div></div>
+              <div class="field"><label for="sv-month">Added each month</label><div class="inp"><span class="pre">₱</span><input id="sv-month" type="number" inputmode="decimal" min="0" step="any" value="10000"></div></div>
+            </div>
+            <div class="field"><label for="sv-rate">Return per year</label><div class="inp"><input id="sv-rate" type="number" inputmode="decimal" min="0" step="any" value="6"><span class="suf">%</span></div><input type="range" data-for="sv-rate" min="0" max="20" step="0.1" value="6" aria-label="Return slider"></div>
+            <div class="field"><label for="sv-yrs">Time</label><div class="inp"><input id="sv-yrs" type="number" inputmode="decimal" min="1" step="1" value="20"><span class="suf">years</span></div><input type="range" data-for="sv-yrs" min="1" max="50" step="1" value="20" aria-label="Years slider"></div>
+            <div class="two">
+              <div class="field"><label for="sv-comp">Compounding</label><div class="inp"><select id="sv-comp"><option value="12" selected>Monthly</option><option value="4">Quarterly</option><option value="1">Yearly</option><option value="365">Daily</option></select></div></div>
+              <div class="field"><label for="sv-infl">Inflation</label><div class="inp"><input id="sv-infl" type="number" inputmode="decimal" min="0" step="any" value="3.5"><span class="suf">%</span></div></div>
+            </div>
+          </div>
+        </form>
+        <div class="card">
+          <div class="hero">
+            <div class="lbl" id="sv-lbl">Balance after 20 years</div>
+            <div class="big" id="sv-final">—</div>
+            <div class="sub" id="sv-sub"></div>
+            <div class="chips">
+              <div class="chip"><div class="cl">You put in</div><div class="cv" id="sv-put"></div></div>
+              <div class="chip"><div class="cl">Interest earned</div><div class="cv" id="sv-int"></div></div>
+              <div class="chip"><div class="cl">Interest share</div><div class="cv" id="sv-share"></div></div>
+            </div>
+          </div>
+          <div class="sec">Growth by year</div>
+          <div id="sv-chart"></div>
+          <div class="legend"><span><b style="--c:color-mix(in srgb,var(--accent) 38%,var(--surface-2))"></b>Your deposits</span><span><b style="--c:var(--accent)"></b>Interest earned</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICE & VAT -->
+    <section class="calc t-price" id="calc-price" data-k="price" aria-labelledby="h-price" hidden>
+      <header class="calc-head">
+        <span class="eyebrow">Shopping and small business</span>
+        <h1 id="h-price" tabindex="-1">Price and VAT calculator</h1>
+        <p class="lede">Add or strip out VAT, apply a discount, or check the Senior and PWD privilege, and see exactly what ends up on the receipt.</p>
+      </header>
+      <div class="cols">
+        <form class="card" autocomplete="off" novalidate>
+          <div class="card-h"><h2>The item</h2><button type="reset" class="ghost">Reset</button></div>
+          <div class="fields">
+            <div class="field"><span class="lab">Price on the tag</span>
+              <div class="seg" role="radiogroup" aria-label="Price basis">
+                <input type="radio" name="pr-basis" id="pb-in" value="in" checked><label for="pb-in">Includes VAT</label>
+                <input type="radio" name="pr-basis" id="pb-ex" value="ex"><label for="pb-ex">Excludes VAT</label>
+              </div>
+            </div>
+            <div class="two">
+              <div class="field"><label for="pr-amt">Price each</label><div class="inp"><span class="pre">₱</span><input id="pr-amt" type="number" inputmode="decimal" min="0" step="any" value="1299"></div></div>
+              <div class="field"><label for="pr-qty">Quantity</label><div class="inp"><input id="pr-qty" type="number" inputmode="numeric" min="1" step="1" value="1"></div></div>
+            </div>
+            <div class="two">
+              <div class="field"><label for="pr-disc">Discount</label><div class="inp"><input id="pr-disc" type="number" inputmode="decimal" min="0" step="any" value="20"><span class="suf">%</span></div></div>
+              <div class="field"><label for="pr-vat">VAT rate</label><div class="inp"><input id="pr-vat" type="number" inputmode="decimal" min="0" step="any" value="12"><span class="suf">%</span></div></div>
+            </div>
+            <label class="switch" for="pr-senior"><span><b>Senior or PWD privilege</b><small>VAT-exempt plus a flat 20% discount</small></span><input id="pr-senior" type="checkbox"><span class="track" aria-hidden="true"></span></label>
+          </div>
+        </form>
+        <div class="card">
+          <div class="hero">
+            <div class="lbl">You pay</div>
+            <div class="big" id="pr-total">—</div>
+            <div class="sub" id="pr-sub"></div>
+            <div class="chips">
+              <div class="chip"><div class="cl">You save</div><div class="cv" id="pr-save"></div></div>
+              <div class="chip"><div class="cl">VAT included</div><div class="cv" id="pr-vatamt"></div></div>
+              <div class="chip"><div class="cl">Price before VAT</div><div class="cv" id="pr-net"></div></div>
+            </div>
+          </div>
+          <div class="bar" id="pr-bar" role="img" aria-label="Breakdown of the list price into what you pay and what you save"></div>
+          <div class="legend" id="pr-legend"></div>
+          <div class="sec">Receipt</div>
+          <div class="rows" id="pr-rows"></div>
+          <p class="note" id="pr-note"></p>
+        </div>
+      </div>
+    </section>
+
+    <p class="foot">Kuwenta gives estimates for planning and is not tax or financial advice. Contribution and tax figures follow the published 2026 tables for SSS, PhilHealth, Pag-IBIG and the BIR. Check them against your payroll provider or accountant before you rely on them.</p>
+  </main>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function(){
+'use strict';
+
+/*LOGIC*/
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const BRACKETS=[
+  {from:0,to:250000,rate:0},{from:250000,to:400000,rate:0.15},{from:400000,to:800000,rate:0.20},
+  {from:800000,to:2000000,rate:0.25},{from:2000000,to:8000000,rate:0.30},{from:8000000,to:Infinity,rate:0.35}
+];
+function incomeTax(ti){let t=0;for(const b of BRACKETS){if(ti>b.from)t+=(Math.min(ti,b.to)-b.from)*b.rate;}return t;}
+function flatTax(gross){return gross<=3000000?Math.max(0,gross-250000)*0.08:null;}
+function sss(comp){
+  if(comp<=0)return{msc:0,ee:0,er:0};
+  const msc=clamp(Math.round(comp/500)*500,5000,35000);
+  return{msc:msc,ee:msc*0.05,er:msc*0.10+(msc<15000?10:30)};
+}
+function philhealth(basic){
+  if(basic<=0)return{ee:0,er:0};
+  const base=clamp(basic,10000,100000);
+  return{ee:base*0.025,er:base*0.025};
+}
+function pagibig(comp){
+  const base=Math.min(Math.max(comp,0),10000);
+  return{ee:base*(comp<=1500?0.01:0.02),er:base*0.02};
+}
+function payroll(o){
+  const comp=o.basic+o.ot, gross=comp+o.allow;
+  const s=sss(comp), p=philhealth(o.basic), h=pagibig(comp);
+  const contrib=s.ee+p.ee+h.ee;
+  const taxable=Math.max(0,comp-contrib);
+  const tax=incomeTax(taxable*12)/12;
+  const ded=contrib+tax+o.other;
+  const er=s.er+p.er+h.er;
+  return{comp:comp,gross:gross,sss:s.ee,ph:p.ee,hdmf:h.ee,tax:tax,other:o.other,ded:ded,net:gross-ded,taxable:taxable,
+    ersss:s.er,erph:p.er,erhdmf:h.er,er:er,cost:gross+er};
+}
+function amortize(P,annual,years,extra){
+  const n=Math.max(1,Math.round(years*12)), r=annual/1200;
+  const pmt=P<=0?0:(r===0?P/n:P*r/(1-Math.pow(1+r,-n)));
+  const bal=[P];let b=P,interest=0,m=0,yi=0,yp=0;const yr=[];
+  while(b>0.005&&m<n+1200){
+    const i=b*r;let pr=pmt+extra-i;
+    if(pr>b)pr=b;
+    b-=pr;interest+=i;m++;bal.push(b);yi+=i;yp+=pr;
+    if(m%12===0){yr.push({y:m/12,principal:yp,interest:yi,balance:b});yi=0;yp=0;}
+  }
+  if(m%12!==0&&m>0)yr.push({y:Math.ceil(m/12),principal:yp,interest:yi,balance:b});
+  return{pmt:pmt,n:n,months:m,interest:interest,paid:P+interest,bal:bal,yr:yr};
+}
+function grow(o){
+  const n=Math.max(1,Math.round(o.years));
+  const rm=Math.pow(1+o.rate/100/o.comp,o.comp/12)-1;
+  let b=o.init;const rows=[];
+  for(let m=1;m<=n*12;m++){
+    b=b*(1+rm)+o.monthly;
+    if(m%12===0){const put=o.init+o.monthly*m;rows.push({y:m/12,balance:b,put:put,interest:b-put});}
+  }
+  const last=rows[rows.length-1];
+  return{rows:rows,n:n,final:last.balance,put:last.put,interest:last.interest,real:last.balance/Math.pow(1+o.infl/100,n)};
+}
+function priceCalc(o){
+  const v=o.vat/100;
+  const listNet=(o.basis==='in'?o.p/(1+v):o.p)*o.qty;
+  const listGross=listNet*(1+v);
+  const rate=o.senior?0.2:o.disc/100;
+  const discount=listNet*rate;
+  const net=listNet-discount;
+  const vatAmt=o.senior?0:net*v;
+  const total=net+vatAmt;
+  return{listNet:listNet,listGross:listGross,discount:discount,net:net,vatAmt:vatAmt,total:total,saved:listGross-total,rate:rate};
+}
+function niceStep(v,ticks){
+  if(v<=0)return 1;
+  const raw=v/ticks,e=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/e;
+  return(f<=1?1:f<=2?2:f<=5?5:10)*e;
+}
+/*END LOGIC*/
+
+const $=id=>document.getElementById(id);
+const REDUCED=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const num=(id,max)=>{const v=parseFloat($(id).value);return isFinite(v)?clamp(v,0,max||1e12):0;};
+const val=name=>document.querySelector('input[name="'+name+'"]:checked').value;
+const group=(n,d)=>Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const money=(v,d)=>{d=d===undefined?2:d;const f=Math.pow(10,d),r=Math.round(v*f)/f;return(r<0?'−':'')+'₱'+group(r,d);};
+const money0=v=>money(v,0);
+const neg=v=>v>0.004?'−'+money(v):money(0);
+const trim1=x=>(Math.round(x*10)/10).toString();
+const compact=v=>{const a=Math.abs(v),s=v<0?'−':'';
+  if(a>=1e9)return s+'₱'+trim1(a/1e9)+'B';
+  if(a>=1e6)return s+'₱'+trim1(a/1e6)+'M';
+  if(a>=1e3)return s+'₱'+trim1(a/1e3)+'K';
+  return s+'₱'+Math.round(a);};
+const pct=(v,d)=>{d=d===undefined?1:d;return(Math.round(v*Math.pow(10,d))/Math.pow(10,d)).toFixed(d)+'%';};
+
+function setNum(el,to,f){
+  const from=el._v;el._v=to;
+  if(from==null||REDUCED||Math.abs(from-to)<1e-9){el.textContent=f(to);return;}
+  cancelAnimationFrame(el._r);
+  const t0=performance.now(),D=320;
+  const step=t=>{
+    const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);
+    el.textContent=f(from+(to-from)*e);
+    if(k<1)el._r=requestAnimationFrame(step);else el.textContent=f(to);
+  };
+  el._r=requestAnimationFrame(step);
+}
+const rowsHTML=list=>list.map(r=>'<div class="row'+(r.t?' total':'')+'">'+(r.c?'<i class="dot" style="--c:'+r.c+'"></i>':'')+'<span class="k">'+r.k+'</span><span class="v'+(r.n?' neg':'')+'">'+r.v+'</span></div>').join('');
+const barHTML=segs=>segs.filter(s=>s.v>0.0001).map(s=>'<i style="--c:'+s.c+';flex:'+s.v+' 1 0"></i>').join('');
+const legendHTML=segs=>segs.filter(s=>s.v>0.0001).map(s=>'<span><b style="--c:'+s.c+'"></b>'+s.l+'</span>').join('');
+const navVal=(k,t)=>{$('nv-'+k).textContent=t;};
+
+/* PAYROLL */
+function upPayroll(){
+  const r=payroll({basic:num('pay-basic'),ot:num('pay-ot'),allow:num('pay-allow'),other:num('pay-other')});
+  const semi=val('pay-sched')==='semi';
+  setNum($('pay-net'),r.net,money);
+  $('pay-sub').textContent=semi?'Two paydays of '+money(r.net/2)+' each':'After '+money(r.ded)+' in deductions and tax';
+  $('pay-year').textContent=money0(r.net*12);
+  $('pay-ded').textContent=money(r.ded);
+  $('pay-rate').textContent=pct(r.gross>0?r.ded/r.gross*100:0);
+  const segs=[
+    {v:Math.max(0,r.net),c:'var(--accent)',l:'Take-home'},{v:r.sss,c:'var(--s-sss)',l:'SSS'},{v:r.ph,c:'var(--s-ph)',l:'PhilHealth'},
+    {v:r.hdmf,c:'var(--s-hdmf)',l:'Pag-IBIG'},{v:r.tax,c:'var(--s-tax)',l:'Withholding tax'},{v:r.other,c:'var(--s-other)',l:'Other'}];
+  $('pay-bar').innerHTML=barHTML(segs);
+  $('pay-legend').innerHTML=legendHTML(segs);
+  $('pay-rows').innerHTML=rowsHTML([
+    {k:'Gross pay (including allowances)',v:money(r.gross)},
+    {k:'SSS',v:neg(r.sss),c:'var(--s-sss)',n:1},
+    {k:'PhilHealth',v:neg(r.ph),c:'var(--s-ph)',n:1},
+    {k:'Pag-IBIG',v:neg(r.hdmf),c:'var(--s-hdmf)',n:1},
+    {k:'Withholding tax',v:neg(r.tax),c:'var(--s-tax)',n:1},
+    {k:'Other deductions',v:neg(r.other),c:'var(--s-other)',n:1},
+    {k:'Net take-home',v:money(r.net),t:1}]);
+  $('pay-er').innerHTML=rowsHTML([
+    {k:'SSS, including EC',v:money(r.ersss)},{k:'PhilHealth',v:money(r.erph)},{k:'Pag-IBIG',v:money(r.erhdmf)},
+    {k:'Total monthly cost of you',v:money(r.cost),t:1}]);
+  navVal('payroll',money0(r.net)+' net / mo');
+}
+
+/* INCOME TAX */
+function upTax(){
+  const gross=num('tx-gross'),ded=num('tx-ded');
+  const ti=Math.max(0,gross-ded);
+  const g=incomeTax(ti),f=flatTax(gross);
+  const useFlat=val('tx-method')==='flat'&&f!==null;
+  const due=useFlat?f:g;
+  let mar=0;for(const b of BRACKETS){if(ti>b.from)mar=b.rate;}
+  if(useFlat)mar=0.08;
+  $('tx-lbl').textContent='Income tax for the year · '+(useFlat?'8% flat option':'graduated rates');
+  setNum($('tx-due'),due,money0);
+  $('tx-sub').textContent='You keep '+money0(gross-due)+' of '+money0(gross);
+  $('tx-eff').textContent=pct(gross>0?due/gross*100:0);
+  $('tx-mar').textContent=pct(mar*100,0);
+  $('tx-mon').textContent=money0(due/12);
+  const segs=[{v:Math.max(0,gross-due),c:'var(--accent)',l:'You keep'},{v:due,c:'var(--s-tax)',l:'Income tax'}];
+  $('tx-bar').innerHTML=barHTML(segs);$('tx-legend').innerHTML=legendHTML(segs);
+  const best=(f===null||g<=f)?0:1;
+  const opts=[{l:'Graduated rates',v:g,ok:true},{l:'8% flat option',v:f,ok:f!==null}];
+  $('tx-cmp').innerHTML=opts.map((o,i)=>'<div class="opt'+(o.ok&&i===best&&Math.abs(g-(f===null?g:f))>=0.5?' win':'')+'"><div class="ol">'+o.l+(o.ok&&i===best&&Math.abs(g-(f===null?g:f))>=0.5?' <span class="pill">Lower</span>':'')+'</div><div class="ov">'+(o.ok?money0(o.v):'Not available')+'</div></div>').join('');
+  $('tx-note').textContent=f===null?'The 8% option is only open to self-employed taxpayers with gross receipts up to ₱3,000,000.'
+    :Math.abs(g-f)<0.5?'Both methods come to the same amount.'
+    :g<f?'Graduated rates save you '+money0(f-g)+' a year.':'The 8% option saves you '+money0(g-f)+' a year.';
+  let hotIdx=-1;BRACKETS.forEach((b,i)=>{if(ti>b.from)hotIdx=i;});
+  $('tx-tbl').innerHTML=BRACKETS.map((b,i)=>{
+    const inb=Math.max(0,Math.min(ti,b.to)-b.from);
+    const label=b.from===0?'Up to ₱250,000':b.to===Infinity?'Over ₱8,000,000':'₱'+group(b.from+1,0)+' – ₱'+group(b.to,0);
+    return '<tr class="'+(inb>0?(i===hotIdx?'hot':''):'off')+'"><td>'+label+'</td><td>'+pct(b.rate*100,0)+'</td><td>'+money0(inb)+'</td><td>'+money0(inb*b.rate)+'</td></tr>';
+  }).join('');
+  $('tx-foot').innerHTML='<tr><td>Total</td><td></td><td>'+money0(ti)+'</td><td>'+money0(g)+'</td></tr>';
+  navVal('tax',money0(due)+' / yr');
+}
+
+/* LOAN */
+function loanChart(a,base,P,showBase){
+  const W=640,H=250,L=58,R=12,T=14,B=30,iw=W-L-R,ih=H-T-B;
+  const N=Math.max(a.months,base.months,1);
+  const X=i=>L+i/N*iw,Y=v=>T+ih-(P>0?v/P:0)*ih;
+  const path=arr=>arr.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join('');
+  let s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Loan balance over time">';
+  for(let k=0;k<=4;k++){const v=P*k/4,y=Y(v);
+    s+='<line class="gl" x1="'+L+'" x2="'+(W-R)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'"/><text class="tick" x="'+(L-8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end">'+compact(v)+'</text>';}
+  const yrs=Math.ceil(N/12),step=Math.max(1,Math.ceil(yrs/7));
+  for(let y=0;y<=yrs;y+=step){s+='<text class="tick" x="'+X(Math.min(y*12,N)).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle">'+y+'y</text>';}
+  s+='<path class="area" d="'+path(a.bal)+'L'+X(a.bal.length-1).toFixed(1)+' '+Y(0)+'L'+X(0).toFixed(1)+' '+Y(0)+'Z"/>';
+  if(showBase)s+='<path class="ln2" d="'+path(base.bal)+'"/>';
+  s+='<path class="ln" d="'+path(a.bal)+'"/>';
+  for(let y=1;y<=yrs;y++){
+    const idx=Math.min(12*y,a.bal.length-1),b=a.bal[idx];
+    const x0=X((y-1)*12),x1=X(Math.min(y*12,N));
+    s+='<rect class="hit" x="'+x0.toFixed(1)+'" y="'+T+'" width="'+Math.max(1,x1-x0).toFixed(1)+'" height="'+ih+'" data-tip="Year '+y+'&#10;Balance '+money0(b)+'&#10;Paid off '+pct(P>0?(1-b/P)*100:0,0)+'"/>';
+  }
+  return s+'</svg>';
+}
+function upLoan(){
+  const P=num('ln-amt',1e11),rate=num('ln-rate',60),yrs=clamp(num('ln-yrs',60),1,60),extra=num('ln-extra',1e10);
+  const a=amortize(P,rate,yrs,extra),base=extra>0?amortize(P,rate,yrs,0):a;
+  setNum($('ln-pmt'),a.pmt+extra,money);
+  if(P<=0){$('ln-sub').textContent='Enter a loan amount to begin';}
+  else{
+    const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+a.months);
+    const when=d.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+    $('ln-sub').textContent='Debt-free by '+when+' · '+a.months+' payments'+(extra>0&&base.months>a.months?' ('+(base.months-a.months)+' months sooner)':'');
+  }
+  $('ln-int').textContent=money0(a.interest);
+  $('ln-paid').textContent=money0(a.paid);
+  if(extra>0){$('ln-c3l').textContent='Interest saved';$('ln-c3').textContent=money0(base.interest-a.interest);}
+  else{$('ln-c3l').textContent='Interest share';$('ln-c3').textContent=pct(a.paid>0?a.interest/a.paid*100:0);}
+  $('ln-chart').innerHTML=loanChart(a,base,P,extra>0);
+  $('ln-legend').innerHTML=extra>0?'<span><b style="--c:var(--accent)"></b>With extra payments</span><span><b style="--c:var(--faint)"></b>Standard schedule</span>':'';
+  $('ln-tbl').innerHTML=a.yr.map(r=>'<tr><td>Year '+r.y+'</td><td>'+money0(r.principal)+'</td><td>'+money0(r.interest)+'</td><td>'+money0(r.balance)+'</td></tr>').join('');
+  navVal('loan',money0(a.pmt+extra)+' / mo');
+}
+
+/* SAVINGS */
+function colChart(rows,maxV){
+  const W=640,H=260,L=58,R=8,T=14,B=30,iw=W-L-R,ih=H-T-B;
+  const step=niceStep(maxV,4),mx=step*4,n=rows.length,bw=iw/n,barW=Math.min(30,bw*0.68);
+  const Y=v=>T+ih-v/mx*ih;
+  let s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Savings growth by year">';
+  for(let k=0;k<=4;k++){const v=step*k,y=Y(v);
+    s+='<line class="gl" x1="'+L+'" x2="'+(W-R)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'"/><text class="tick" x="'+(L-8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end">'+compact(v)+'</text>';}
+  const lab=Math.max(1,Math.ceil(n/8));
+  rows.forEach((r,i)=>{
+    const x=L+bw*i+(bw-barW)/2,hp=Math.max(0,r.put)/mx*ih,hi=Math.max(0,r.interest)/mx*ih;
+    s+='<g class="col" data-tip="Year '+r.y+'&#10;Balance '+money0(r.balance)+'&#10;You put in '+money0(r.put)+'&#10;Interest '+money0(r.interest)+'">'
+      +'<rect class="hit" x="'+(L+bw*i).toFixed(1)+'" y="'+T+'" width="'+bw.toFixed(1)+'" height="'+ih+'"/>'
+      +'<rect class="b-ct" x="'+x.toFixed(1)+'" y="'+(T+ih-hp).toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+hp.toFixed(1)+'"/>'
+      +'<rect class="b-in" x="'+x.toFixed(1)+'" y="'+(T+ih-hp-hi).toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+hi.toFixed(1)+'" rx="2"/></g>';
+    if(n<=10||r.y%lab===0)s+='<text class="tick" x="'+(L+bw*i+bw/2).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle">'+r.y+'</text>';
+  });
+  return s+'</svg>';
+}
+function upSavings(){
+  const o={init:num('sv-init'),monthly:num('sv-month'),rate:num('sv-rate',100),years:clamp(num('sv-yrs',100),1,100),comp:parseInt($('sv-comp').value,10)||12,infl:num('sv-infl',100)};
+  const g=grow(o);
+  $('sv-lbl').textContent='Balance after '+g.n+(g.n===1?' year':' years');
+  setNum($('sv-final'),g.final,money0);
+  $('sv-sub').textContent=o.infl>0?money0(g.real)+' in today’s pesos at '+pct(o.infl)+' inflation':'Before inflation';
+  $('sv-put').textContent=money0(g.put);
+  $('sv-int').textContent=money0(g.interest);
+  $('sv-share').textContent=pct(g.final>0?g.interest/g.final*100:0,0);
+  $('sv-chart').innerHTML=colChart(g.rows,g.final);
+  navVal('savings',compact(g.final)+' in '+g.n+'y');
+}
+
+/* PRICE AND VAT */
+function upPrice(){
+  const senior=$('pr-senior').checked;
+  $('pr-disc').disabled=senior;
+  const o={p:num('pr-amt'),qty:Math.max(1,Math.round(num('pr-qty',1e6))||1),vat:num('pr-vat',100),disc:Math.min(100,num('pr-disc')),basis:val('pr-basis'),senior:senior};
+  const r=priceCalc(o);
+  setNum($('pr-total'),r.total,money);
+  $('pr-sub').textContent=r.saved>0.004?'You save '+money(r.saved)+' ('+pct(r.listGross>0?r.saved/r.listGross*100:0)+') off the regular price':'No discount applied';
+  $('pr-save').textContent=money(r.saved);
+  $('pr-vatamt').textContent=money(r.vatAmt);
+  $('pr-net').textContent=money(r.net);
+  const segs=[{v:r.net,c:'var(--accent)',l:'Item price'},{v:r.vatAmt,c:'var(--s-hdmf)',l:'VAT'},{v:Math.max(0,r.saved),c:'var(--s-other)',l:'You save'}];
+  $('pr-bar').innerHTML=barHTML(segs);$('pr-legend').innerHTML=legendHTML(segs);
+  $('pr-rows').innerHTML=rowsHTML([
+    {k:'Regular price'+(o.qty>1?' ('+o.qty+' items), before VAT':', before VAT'),v:money(r.listNet)},
+    {k:(senior?'Senior / PWD discount (20%)':'Discount ('+pct(o.disc,o.disc%1?1:0)+')'),v:neg(r.discount),n:1},
+    {k:'Price after discount',v:money(r.net)},
+    {k:senior?'VAT (exempt)':'VAT ('+pct(o.vat,o.vat%1?1:0)+')',v:money(r.vatAmt)},
+    {k:'Total to pay',v:money(r.total),t:1}]);
+  $('pr-note').textContent=senior?'Senior citizen and PWD purchases of qualifying goods and services are VAT-exempt and get a 20% discount on the VAT-exclusive price.':'Discount is taken off the price before VAT, then VAT is added on what is left.';
+  navVal('price',money0(r.total)+' to pay');
+}
+
+/* wiring */
+const calcs={payroll:upPayroll,tax:upTax,loan:upLoan,savings:upSavings,price:upPrice};
+const fillRange=r=>{const p=(r.value-r.min)/(r.max-r.min)*100;r.style.setProperty('--p',clamp(p,0,100)+'%');};
+document.querySelectorAll('section.calc').forEach(sec=>{
+  const fn=calcs[sec.dataset.k],form=sec.querySelector('form');
+  const sync=()=>form.querySelectorAll('input[type=range]').forEach(fillRange);
+  form.addEventListener('input',e=>{
+    const t=e.target;
+    if(t.type==='number'){const r=form.querySelector('input[type=range][data-for="'+t.id+'"]');if(r){r.value=t.value;fillRange(r);}}
+    fn();
+  });
+  form.addEventListener('change',fn);
+  form.addEventListener('submit',e=>e.preventDefault());
+  form.addEventListener('reset',()=>setTimeout(()=>{sync();fn();},0));
+  form.querySelectorAll('input[type=range][data-for]').forEach(r=>r.addEventListener('input',()=>{$(r.dataset.for).value=r.value;fillRange(r);}));
+  sync();fn();
+});
+
+/* routing by hash */
+const KEYS=['payroll','tax','loan','savings','price'];
+function show(k,moved){
+  document.querySelectorAll('section.calc').forEach(s=>{s.hidden=s.dataset.k!==k;});
+  document.querySelectorAll('.nav-item').forEach(a=>{if(a.dataset.k===k)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+  if(moved){window.scrollTo(0,0);const h=document.querySelector('#calc-'+k+' h1');if(h)h.focus({preventScroll:true});}
+}
+function route(moved){const k=location.hash.slice(1);show(KEYS.indexOf(k)>-1?k:'payroll',moved);}
+window.addEventListener('hashchange',()=>route(true));
+route(false);
+
+/* chart tooltips */
+const tip=$('tip');
+function onPoint(e){
+  const h=e.target.closest&&e.target.closest('[data-tip]');
+  if(!h){tip.hidden=true;return;}
+  tip.textContent=h.getAttribute('data-tip');tip.hidden=false;
+  const r=tip.getBoundingClientRect();let x=e.clientX+14,y=e.clientY+14;
+  if(x+r.width>window.innerWidth-8)x=e.clientX-r.width-14;
+  if(y+r.height>window.innerHeight-8)y=e.clientY-r.height-14;
+  tip.style.left=Math.max(8,x)+'px';tip.style.top=Math.max(8,y)+'px';
+}
+document.addEventListener('pointermove',onPoint);
+document.addEventListener('pointerdown',onPoint);
+document.addEventListener('scroll',()=>{tip.hidden=true;},{passive:true});
+})();
+</script>
+
+</body></html>

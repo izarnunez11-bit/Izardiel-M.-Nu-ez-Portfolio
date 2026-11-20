@@ -1,0 +1,125 @@
+/* ===== WELCOME LOADING SCREEN ===== */
+.preloader{
+  background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--primary) 16%,var(--bg)),var(--bg) 68%);
+  transition:transform 1.25s cubic-bezier(.77,0,.18,1),visibility 0s 1.25s;
+}
+.preloader.done{pointer-events:none;visibility:hidden}
+
+/* curved bottom edge that flattens as the curtain lifts */
+.preloader::after{
+  content:"";position:absolute;left:-10%;right:-10%;top:calc(100% - 1px);height:14vh;
+  background:var(--bg);border-radius:0 0 50% 50% / 0 0 100% 100%;
+  transition:height 1.25s cubic-bezier(.77,0,.18,1);
+}
+.preloader.done::after{height:0}
+
+.pre-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.pre-glow{
+  position:absolute;left:50%;top:50%;width:60vmax;height:60vmax;margin:-30vmax 0 0 -30vmax;border-radius:50%;
+  background:radial-gradient(circle,rgba(var(--rgb),.28),transparent 60%);
+  filter:blur(30px);animation:preGlow 5s ease-in-out infinite alternate;
+}
+@keyframes preGlow{from{transform:scale(.8);opacity:.6}to{transform:scale(1.15);opacity:1}}
+
+.pre-inner{position:relative;z-index:1;display:grid;justify-items:center;text-align:center}
+
+.pre-greet,.pre-sub,.pre-bar,.pre-meta,.pre-logo{
+  transition:opacity .6s ease,transform .9s cubic-bezier(.6,0,.2,1),filter .6s ease;
+}
+
+.pre-greet{
+  height:30px;overflow:hidden;margin-bottom:18px;
+  font:500 15px var(--font-heading);letter-spacing:6px;text-transform:uppercase;color:var(--secondary);
+  animation:preUp .9s .1s ease backwards;
+}
+.pre-greet span{display:inline-block;transition:opacity .3s ease,transform .3s ease,filter .3s ease}
+.pre-greet span.out{opacity:0;transform:translateY(-14px);filter:blur(4px)}
+
+.pre-logo{margin:0;animation:preIn .8s ease backwards}
+.pre-logo span{display:inline-block;animation:dotPulse 1.6s ease-in-out infinite}
+@keyframes dotPulse{50%{text-shadow:0 0 22px var(--primary),0 0 40px var(--accent);transform:translateY(-3px)}}
+
+.pre-sub{margin:10px 0 34px;font-size:14px;color:var(--muted);letter-spacing:.5px;animation:preUp .9s .5s ease backwards}
+@keyframes preUp{from{opacity:0;transform:translateY(12px)}}
+
+.pre-bar{width:240px;height:3px;border-radius:3px}
+.pre-bar i{animation:none;transform:scaleX(0);transform-origin:left;box-shadow:0 0 14px var(--primary)}
+.pre-meta{
+  display:flex;justify-content:space-between;width:240px;margin-top:14px;
+  font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+}
+.pre-meta b{color:var(--secondary);font-family:var(--font-heading);letter-spacing:0}
+
+/* leaving: the pieces fade out one after another, the logo last */
+.preloader.leaving .pre-bar,
+.preloader.leaving .pre-meta{opacity:0;transform:translateY(10px)}
+.preloader.leaving .pre-greet,
+.preloader.leaving .pre-sub{opacity:0;transform:translateY(-14px);filter:blur(4px)}
+.preloader.leaving .pre-logo{opacity:0;transform:scale(1.18);filter:blur(10px);transition-delay:.2s}
+
+/* ===== SMOOTH MOTION AFTER LOADING ===== */
+
+/* the page settles into place while the curtain lifts */
+.hero-content{transform:scale(1.05);transform-origin:50% 25%;transition:transform 2.2s cubic-bezier(.16,1,.3,1)}
+.ready .hero-content{transform:none}
+#bgCanvas{opacity:0;transition:opacity 2.6s ease}
+.ready #bgCanvas{opacity:1}
+
+/* navbar + dock glide in */
+.header{opacity:0;transform:translateY(-30px);transition:opacity .9s .5s ease,transform 1.1s .5s cubic-bezier(.16,1,.3,1)}
+.ready .header{opacity:1;transform:none}
+.dock{opacity:0;transform:translateY(24px);transition:opacity .9s 1.6s ease,transform 1.1s 1.6s cubic-bezier(.16,1,.3,1)}
+.ready .dock{opacity:1;transform:none}
+
+/* hero entrance: slower, softer */
+.hero-in{
+  transform:translateY(40px);filter:blur(6px);
+  transition:opacity 1.2s ease,transform 1.3s cubic-bezier(.16,1,.3,1),filter 1.1s ease;
+  transition-delay:var(--d,0s);
+}
+.ready .hero-in{filter:none}
+.word>span{
+  transition:transform 1.3s cubic-bezier(.16,1,.3,1);
+  transition-delay:calc(var(--i)*.09s + .2s);
+}
+.hero-decoration{opacity:0;transition:opacity 2.2s 1s ease}
+.ready .hero-decoration{opacity:1}
+
+/* scroll reveals: longer, smoother, with a little scale */
+.reveal{
+  transform:translateY(60px) scale(.96);
+  transition:opacity 1.1s ease,transform 1.2s cubic-bezier(.16,1,.3,1),filter 1.1s ease,border-color .4s,box-shadow .4s;
+}
+.reveal.show{transform:none}
+
+/* section headings: eyebrow, title and text arrive one after another */
+.section-heading.reveal>*{
+  opacity:0;transform:translateY(34px);
+  transition:opacity .9s ease,transform 1.1s cubic-bezier(.16,1,.3,1);
+}
+.section-heading.reveal.show>*{opacity:1;transform:none}
+.section-heading.reveal>:nth-child(1){transition-delay:.1s}
+.section-heading.reveal>:nth-child(2){transition-delay:.25s}
+.section-heading.reveal>:nth-child(3){transition-delay:.4s}
+
+/* project cards slide in from alternating sides */
+.project-card.reveal:nth-child(odd){transform:translate(-45px,60px) scale(.96)}
+.project-card.reveal:nth-child(even){transform:translate(45px,60px) scale(.96)}
+.project-card.reveal.show{transform:none}
+
+/* timeline items slide in from the left */
+.timeline-item.reveal{transform:translateX(-50px)}
+.timeline-item.reveal.show{transform:none}
+
+/* keep the hover tilt snappy even with the longer reveal */
+.tilt.tilting{transition:opacity .9s,filter .9s,border-color .4s,box-shadow .4s,transform .08s linear;transition-delay:0s}
+
+/* ===== COFFEE PROJECT CARD ===== */
+.visual-four{background:radial-gradient(circle at center,color-mix(in srgb,var(--secondary) 26%,var(--bg)),var(--surface))}
+.coffee-cup{width:140px;height:auto;overflow:visible;filter:drop-shadow(0 14px 22px rgba(0,0,0,.35));transition:transform .5s cubic-bezier(.16,1,.3,1)}
+.project-card:hover .coffee-cup{transform:translateY(-6px) rotate(-3deg)}
+.coffee-cup .cs{fill:none;stroke:var(--secondary);stroke-width:4;stroke-linecap:round;animation:coffeeSteam 3s ease-in-out infinite}
+.coffee-cup .cs2{animation-delay:.7s}
+.coffee-cup .cs3{animation-delay:1.4s}
+@keyframes coffeeSteam{0%{opacity:0;transform:translateY(8px)}40%{opacity:.9}100%{opacity:0;transform:translateY(-10px)}}
+.visual-four p{font-size:10px;letter-spacing:3px;color:var(--muted);margin-top:10px}
